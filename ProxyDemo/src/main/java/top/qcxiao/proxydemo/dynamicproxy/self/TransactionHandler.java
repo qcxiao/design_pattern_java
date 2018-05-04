@@ -18,7 +18,18 @@ public class TransactionHandler implements InvocationHandler {
     }
 
     @Override
-    public void invoke(Object o, Method m) {
+    public void invoke(Method m,Object args) {
+        log.info("开启事务.....");
+        try {
+            m.invoke(target, args);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        log.info("提交事务.....");
+    }
+
+    @Override
+    public void invoke(Method m) {
         log.info("开启事务.....");
         try {
             m.invoke(target);
@@ -27,5 +38,4 @@ public class TransactionHandler implements InvocationHandler {
         }
         log.info("提交事务.....");
     }
-
 }

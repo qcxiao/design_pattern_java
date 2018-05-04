@@ -19,7 +19,18 @@ public class TimeHandler implements InvocationHandler {
     }
 
     @Override
-    public void invoke(Object o, Method m) {
+    public void invoke(Method m, Object args) {
+        log.info("开始时间:" + new Date());
+        try {
+            m.invoke(target, args);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        log.info("结束时间:" + new Date());
+    }
+
+    @Override
+    public void invoke(Method m) {
         log.info("开始时间:" + new Date());
         try {
             m.invoke(target);

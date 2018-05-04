@@ -1,5 +1,9 @@
 package top.qcxiao.proxydemo.dynamicproxy.self;
 
+/**
+ * 实现动态代理
+ * 实现有参和无参方法
+ */
 public class Client {
     public static void main(String[] args) throws Exception {
         Subject subject = new RealSubject();
@@ -13,6 +17,8 @@ public class Client {
         subject = (Subject) Proxy.newProxyInstance(Subject.class, invocationHandler2);
 
         // 执行目标方法
+        subject.dosomething("client传入的参数");
+        System.out.println("============");
         subject.dosomething();
 
     }
