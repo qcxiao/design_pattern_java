@@ -4,6 +4,7 @@ import javax.tools.ToolProvider;
 import java.io.FileWriter;
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
@@ -23,11 +24,31 @@ public class Proxy {
      */
     public static Object newProxyInstance(Class subject, InvocationHandler invocationHandler) throws Exception {
         String methodStr = "";
-        String rt = "\r\n";
+
         // 代理类与被代理放在同一个包下，所以这里直接使用相同包名即可
         String packageName = subject.getPackage().getName();
 
-        /**
+        // 1. 生成Java源文件
+        String fileName = generateSrc(subject, methodStr, packageName);
+
+        // 2. 将Java文件编译成class文件
+        compile(fileName);
+
+        // 3. 将class文件中的内容动态加载到jvm中并实例化
+        Object object = instant(invocationHandler, packageName);
+
+        return object;
+    }
+
+
+
+    /**
+     * 生成Java源文件
+     */
+    private static String generateSrc(Class subject, String methodStr, String packageName) throws IOException {
+        String rt = "\r\n";
+
+        /*
          * 利用反射得到subject的所有方法，并重新组装
          */
         Method[] methods = subject.getMethods();
@@ -65,9 +86,7 @@ public class Proxy {
                     "    }" + rt;
         }
 
-        /**
-         * 生成Java源文件
-         */
+
         String srcCode =
                 "package " + packageName + ";" + rt +
                         "import java.lang.reflect.Method;" + rt +
@@ -84,31 +103,31 @@ public class Proxy {
         fileWriter.write(srcCode);
         fileWriter.flush();
         fileWriter.close();
+        return fileName;
+    }
 
-        /**
-         * 将Java文件编译成class文件
-         */
+
+    /**
+     * 将Java文件编译成class文件
+     */
+    private static void compile(String fileName) throws IOException {
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-        StandardJavaFileManager standardJavaFileManager =
-                compiler.getStandardFileManager(null, null, null);
+        StandardJavaFileManager standardJavaFileManager = compiler.getStandardFileManager(null, null, null);
         Iterable iterable = standardJavaFileManager.getJavaFileObjects(fileName);
-
-        CompilationTask compilationTask =
-                compiler.getTask(null, standardJavaFileManager,
-                        null, null, null, iterable);
+        CompilationTask compilationTask = compiler.getTask(null, standardJavaFileManager, null, null, null, iterable);
         compilationTask.call();
         standardJavaFileManager.close();
+    }
 
-        /**
-         * 装载到内存，并实例化
-         */
+    /**
+     * 将class文件中的内容动态加载到jvm中并实例化
+     */
+    private static Object instant(InvocationHandler invocationHandler, String packageName) throws ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, java.lang.reflect.InvocationTargetException {
         // 装载，以下两种方式可以装载
         //Class clazz = Proxy.class.getClassLoader().loadClass(packageName + ".$Proxy1");
         Class clazz = Class.forName(packageName + ".$Proxy1");
         // 通过构造函数初始化类
         Constructor constructor = clazz.getConstructor(InvocationHandler.class);
-        Object object = constructor.newInstance(invocationHandler);
-
-        return object;
+        return constructor.newInstance(invocationHandler);
     }
 }
