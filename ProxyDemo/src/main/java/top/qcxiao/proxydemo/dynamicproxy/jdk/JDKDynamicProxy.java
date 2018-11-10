@@ -5,13 +5,23 @@ import lombok.extern.slf4j.Slf4j;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 
 @Slf4j
-public class Proxy implements InvocationHandler {
-    private Subject subject;
+public class JDKDynamicProxy implements InvocationHandler {
+    private Object target;
 
-    public Proxy(Subject subject) {
-        this.subject = subject;
+    public JDKDynamicProxy(Object target) {
+        this.target = target;
+    }
+
+    /**
+     * 获取被代理接口实例对象
+     * @param <T>
+     * @return
+     */
+    public <T> T getProxy() {
+        return (T) Proxy.newProxyInstance(target.getClass().getClassLoader(), target.getClass().getInterfaces(), this);
     }
 
     @Override
@@ -19,7 +29,7 @@ public class Proxy implements InvocationHandler {
         log.info("Proxy before...");
         Object object = null;
         try {
-            object = method.invoke(subject, args);
+            object = method.invoke(this.target, args);
         } catch (Exception e) {
             log.info("Proxy error");
             throw e;

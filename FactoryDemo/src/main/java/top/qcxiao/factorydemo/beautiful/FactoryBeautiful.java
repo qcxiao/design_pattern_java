@@ -3,14 +3,14 @@ package top.qcxiao.factorydemo.beautiful;
 /**
  * 抽象出一个类别
  */
-abstract class Fruit {
+interface Fruit {
     public abstract void eat();
 }
 
 /**
  * 具体的对象
  */
-class Apple extends Fruit {
+class Apple implements Fruit {
     @Override
     public void eat() {
         System.out.println("eat apple");
@@ -20,7 +20,7 @@ class Apple extends Fruit {
 /**
  * 具体的对象
  */
-class Orange extends Fruit {
+class Orange implements Fruit {
     @Override
     public void eat() {
         System.out.println("eat orange");
